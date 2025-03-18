@@ -54,6 +54,7 @@ def signup(request):
             '''
     return render(request, "signup.html")
 
+# Login 
 @csrf_exempt
 def login(request):
     if request.method == "POST":
@@ -89,6 +90,89 @@ def login(request):
             ''' 
             return messages.error(request, str(e))
     return render(request, "login.html")
+
+# Get all users
+@csrf_exempt
+def get_all_users(request):
+    if request.method=='GET':
+        get_all_users=UserDetails.objects.all() #queryset
+        serialized_data=UserDetailsSerializer(get_all_users,many=True)
+        return JsonResponse(serialized_data.data,safe=False)
+
+# create user
+@csrf_exempt
+def create_user(request):
+        if request.method=='POST':
+            try:
+                input_data = json.loads(request.body)
+                serializer_data = UserDetailsSerializer(data=input_data) # deserializing the data
+                if serializer_data.is_valid():
+                    serializer_data.save()
+                    return JsonResponse({
+                        "success" : True,
+                        "message" : "Data saved successfully"
+                    },status=201)
+            except Exception as e:
+                return JsonResponse({
+                        "success" : False,
+                        "error" : str(e),
+                        "message" : "Failed to save Data"
+                    },status=400)
+
+@csrf_exempt
+def get_user_by_email(request,email):
+    if request.method=='GET':
+        try:
+            user = UserDetails.objects.get(email=email)
+            serializer_data = UserDetailsSerializer(user) # deserializing the data
+            return JsonResponse({
+                    "success" : True,
+                    "message" : serializer_data.data
+                },status=200)
+        except Exception as e:
+            return JsonResponse({
+                    "success" : False,
+                    "error" : str(e),     
+                },status=400)
+
+@csrf_exempt
+def update_user_data(request,email):
+    if request.method=='PATCH':
+        try:
+            user = UserDetails.objects.get(email=email)
+            input_data = json.loads(request.body)
+            serializer_data = UserDetailsSerializer(user,data = input_data,partial = True) # deserializing the data
+            
+            if serializer_data.is_valid():
+                serializer_data.save()
+            return JsonResponse({
+                    "Success" : True,
+                    "message" : "Data updated successfully",
+                    "Updated_data" : serializer_data.data
+                },status=200)
+        except Exception as e:
+            return JsonResponse({
+                    "success" : False,
+                    "Error" : str(e),     
+                },status=400)
+
+@csrf_exempt
+def delete_user_data(request,email):
+    if request.method=='DELETE':
+        try:
+          user = UserDetails.objects.get(email=email)
+          user.delete()
+          return JsonResponse({
+                    "Success" : True,
+                    "message" : "Data deleted successfully",
+                    
+                },status=200)
+        except Exception as e:
+            return JsonResponse({
+                    "success" : False,
+                    "Error" : str(e),     
+                },status=400)
+
 
 
     
